@@ -45,6 +45,28 @@
         }
       ],
       "returns": null
+    },
+    {
+      "name": "voteGif",
+      "accounts": [
+        {
+          "name": "baseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "returns": null
     }
   ],
   "accounts": [
@@ -76,18 +98,33 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "id",
+            "type": "string"
+          },
+          {
             "name": "userAddress",
             "type": "publicKey"
           },
           {
             "name": "gifLink",
             "type": "string"
+          },
+          {
+            "name": "votes",
+            "type": "u64"
           }
         ]
       }
     }
   ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "VoteGif",
+      "msg": "This is an error message clients will automatically display"
+    }
+  ],
   "metadata": {
-    "address": "AvGyfAqGcANu4neR4TjcxAQJ7Ghq8oXi4xA29etED6Lb"
+    "address": "7KtMmq5We9ktjn7ZE4Tx7fvbSCB2Jj6f8A8rbrhYQmXv"
   }
 }

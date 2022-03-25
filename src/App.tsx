@@ -18,7 +18,7 @@ interface ConnectOpts {
 type PhantomEvent = "disconnect" | "connect" | "accountChanged";
 
 (window as any).global = window;
-window.Buffer = require('buffer').Buffer;
+window.Buffer = require("buffer").Buffer;
 
 interface PhantomProvider {
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
@@ -35,9 +35,9 @@ type WindowWithSolana = Window & {
 const { SystemProgram } = web3;
 
 // Load keypair to be used for baseAccount
-const arr = Object.values(kp._keypair.secretKey)
-const secret = new Uint8Array(arr)
-const baseAccount = web3.Keypair.fromSecretKey(secret)
+const arr = Object.values(kp._keypair.secretKey);
+const secret = new Uint8Array(arr);
+const baseAccount = web3.Keypair.fromSecretKey(secret);
 
 // Get our program's id from the IDL file.
 const programID = new PublicKey(idl.metadata.address);
@@ -55,7 +55,10 @@ const TWITTER_HANDLE = "jponc";
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
 type Item = {
+  id: string,
   gifLink: string;
+  userAddress: PublicKey;
+  votes: any;
 };
 
 const App = () => {
@@ -163,10 +166,10 @@ const App = () => {
     if (inputValue.length === 0) {
       console.log("No gif link given!");
       return;
-    };
+    }
 
-    setInputValue('');
-    console.log('Gif link: ', inputValue);
+    setInputValue("");
+    console.log("Gif link: ", inputValue);
 
     try {
       // initialize the program
@@ -179,7 +182,7 @@ const App = () => {
         accounts: {
           baseAccount: baseAccount.publicKey,
           user: provider.wallet.publicKey,
-        }
+        },
       });
 
       console.log("GIF successfully sent to program", inputValue);
@@ -187,7 +190,30 @@ const App = () => {
       await getGifList();
     } catch (err) {
       console.log("Error sending GIF: ", err);
-    };
+    }
+  };
+
+  const voteGif = async (id: string) => {
+    try {
+      // initialize the program
+      const provider = getProvider();
+      // @ts-ignore
+      const program = new Program(idl, programID, provider);
+
+      // send the link to the program
+      await program.rpc.voteGif(id, {
+        accounts: {
+          baseAccount: baseAccount.publicKey,
+          user: provider.wallet.publicKey,
+        },
+      });
+
+      console.log("GIF successfully voted", inputValue);
+
+      await getGifList();
+    } catch (err) {
+      console.log("Error voting GIF: ", err);
+    }
   };
 
   const createGifAccount = async () => {
@@ -252,7 +278,20 @@ const App = () => {
             {/* We use index as the key instead, also, the src is now item.gifLink */}
             {gifList.map((item, index) => (
               <div className="gif-item" key={index}>
-                <img src={item.gifLink} />
+                <div>
+                  <img src={item.gifLink} />
+                  <div className="gif-item-details">
+                    <button
+                      className="cta-button connect-wallet-button cta-upvote"
+                      onClick={() => voteGif(item.id)}
+                    >
+                      upvote
+                    </button>
+                    <div className="gif-item-votes">
+                      votes: {item.votes.toNumber()}
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

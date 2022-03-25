@@ -128,3 +128,14 @@
 .connected-container button {
   height: 50px;
 }
+
+.gif-item-details {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gif-item-votes {
+  color: white;
+}
