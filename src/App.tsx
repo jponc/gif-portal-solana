@@ -1,30 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import twitterLogo from "./assets/twitter-logo.svg";
 import "./App.css";
 import { PublicKey } from "@solana/web3.js";
 
 interface ConnectOpts {
-    onlyIfTrusted: boolean;
+  onlyIfTrusted: boolean;
 }
 
 type PhantomEvent = "disconnect" | "connect" | "accountChanged";
 
 interface PhantomProvider {
-    connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
-    disconnect: ()=>Promise<void>;
-    on: (event: PhantomEvent, callback: (args:any)=>void) => void;
-    isPhantom: boolean;
+  connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
+  disconnect: () => Promise<void>;
+  on: (event: PhantomEvent, callback: (args: any) => void) => void;
+  isPhantom: boolean;
 }
 
-type WindowWithSolana = Window & { 
-    solana?: PhantomProvider;
-}
+type WindowWithSolana = Window & {
+  solana?: PhantomProvider;
+};
 
 // Constants
 const TWITTER_HANDLE = "jponc";
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
 const App = () => {
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+
   const checkIfWalletIsConnected = async () => {
     const solWindow = window as WindowWithSolana;
     try {
@@ -32,6 +35,13 @@ const App = () => {
       if (solana) {
         if (solana.isPhantom) {
           console.log("Phantom wallet found!");
+
+          const response = await solana.connect({ onlyIfTrusted: true });
+          console.log(
+            `Connected with Public Key: ${response.publicKey.toString()}`
+          );
+
+          setWalletAddress(response.publicKey.toString());
         }
       } else {
         alert("Solana object not found! Get a Phantom Wallet!");
@@ -41,18 +51,47 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
+  const connectWallet = async () => {
+    const solWindow = window as WindowWithSolana;
 
+    const { solana } = solWindow;
+
+    if (solana) {
+      const response = await solana.connect();
+      console.log(`Connected with Public Key: ${response.publicKey.toString()}`);
+
+      setWalletAddress(response.publicKey.toString());
+    }
+  };
+
+  const renderNotConnectedContainer = () => (
+    <button
+      className="cta-button connect-wallet-button"
+      onClick={connectWallet}
+    >
+      Connect to Wallet
+    </button>
+  );
+
+  useEffect(() => {
+    const onLoad = async () => {
+      await checkIfWalletIsConnected();
+    };
+
+    window.addEventListener("load", onLoad);
+    return () => window.removeEventListener("load", onLoad);
   }, []);
 
   return (
     <div className="App">
-      <div className="container">
+      <div className={walletAddress ? "authed-container" : "container"}>
         <div className="header-container">
           <p className="header">🖼 GIF Portal</p>
           <p className="sub-text">
             View your GIF collection in the metaverse ✨
           </p>
+
+          {!walletAddress && renderNotConnectedContainer()}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
