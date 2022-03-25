@@ -9,12 +9,16 @@ import {
 } from "@solana/web3.js";
 import { Program, Provider, web3, Wallet } from "@project-serum/anchor";
 import idl from "./idl.json";
+import kp from "./keypair.json";
 
 interface ConnectOpts {
   onlyIfTrusted: boolean;
 }
 
 type PhantomEvent = "disconnect" | "connect" | "accountChanged";
+
+(window as any).global = window;
+window.Buffer = require('buffer').Buffer;
 
 interface PhantomProvider {
   connect: (opts?: Partial<ConnectOpts>) => Promise<{ publicKey: PublicKey }>;
@@ -28,10 +32,12 @@ type WindowWithSolana = Window & {
 };
 
 // systemProgram is a reference to the Solana runtime
-const { SystemProgram, Keypair } = web3;
+const { SystemProgram } = web3;
 
-// Create keypair for the account that will hold the GIF data
-let baseAccount = Keypair.generate();
+// Load keypair to be used for baseAccount
+const arr = Object.values(kp._keypair.secretKey)
+const secret = new Uint8Array(arr)
+const baseAccount = web3.Keypair.fromSecretKey(secret)
 
 // Get our program's id from the IDL file.
 const programID = new PublicKey(idl.metadata.address);
@@ -154,15 +160,34 @@ const App = () => {
   };
 
   const sendGif = async () => {
-    if (inputValue.length > 0) {
-      console.log("Gif link:", inputValue);
+    if (inputValue.length === 0) {
+      console.log("No gif link given!");
+      return;
+    };
 
-      const currentList = gifList || [];
-      setGifList([...currentList, { gifLink: inputValue }]);
-      setInputValue("");
-    } else {
-      console.log("Empty input. Try again.");
-    }
+    setInputValue('');
+    console.log('Gif link: ', inputValue);
+
+    try {
+      // initialize the program
+      const provider = getProvider();
+      // @ts-ignore
+      const program = new Program(idl, programID, provider);
+
+      // send the link to the program
+      await program.rpc.addGif(inputValue, {
+        accounts: {
+          baseAccount: baseAccount.publicKey,
+          user: provider.wallet.publicKey,
+        }
+      });
+
+      console.log("GIF successfully sent to program", inputValue);
+
+      await getGifList();
+    } catch (err) {
+      console.log("Error sending GIF: ", err);
+    };
   };
 
   const createGifAccount = async () => {
