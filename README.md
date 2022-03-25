@@ -2,6 +2,9 @@
 
 This project is a result of trying to learn Solana by following tutorials made by https://buildspace.so/learn-solana
 
+# Solana code
+https://github.com/jponc/mysolanaproject
+
 # Deployed
 
 http://solana-gif.jponc.dev.s3-website.ap-southeast-2.amazonaws.com/
